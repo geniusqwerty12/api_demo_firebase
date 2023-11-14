@@ -4,6 +4,8 @@ import 'package:api_demo_firebase/models/product.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+final String productUrl = "https://fir-sample-d3c5d-default-rtdb.asia-southeast1.firebasedatabase.app/products.json";
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -56,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
       myProducts = jsonList.map((item){
         return Product.fromJson(item);
       }).toList();
-      print(myProducts[0].id);
+      // print(myProducts[0].id);
       setState(() {
         
       });
@@ -73,17 +75,51 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text("API Testing"),
       ),
-      body: ListView.builder(
-            itemCount: myProducts.length,
+      // Unclean way of integrating APIS
+      // body: ListView.builder(
+      //       itemCount: myProducts.length,
+      //       itemBuilder: (context, index) {
+      //         final item = myProducts[index];
+      //         return ListTile(
+      //           leading: Image.network(item.thumbnail!),
+      //           title: Text(item.title!),
+      //           subtitle: Text('PHP ${item.price}'),
+      //         );
+      //       },
+      //     ),
+      // );
+
+      // A much better way of adding APIs
+      body: FutureBuilder(
+        future: http.get( Uri.parse(productUrl) ), 
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          // Check the status of the asynchronous
+          if(snapshot.connectionState == ConnectionState.waiting)
+            return CircularProgressIndicator();
+
+          if(snapshot.hasError)
+            return Text("An error occured");
+        
+          List<Product> testProducts = [];
+          List jsonList = json.decode(snapshot.data.body);
+          testProducts = jsonList.map((item){
+            return Product.fromJson(item);
+          }).toList();
+
+          return ListView.builder(
+            itemCount: testProducts.length,
             itemBuilder: (context, index) {
-              final item = myProducts[index];
+              final item = testProducts[index];
               return ListTile(
                 leading: Image.network(item.thumbnail!),
                 title: Text(item.title!),
                 subtitle: Text('PHP ${item.price}'),
               );
             },
-          ),
-      );
+          );
+
+        },
+      ),
+    );
   }
 }
